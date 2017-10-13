@@ -1,7 +1,25 @@
+var pizzapi = require('dominos') // or without payment option use require('pizzapi');
+
 module.exports = {
   init: (controller) => {
     controller.hears([/I want a pizza/], ['direct_message', 'direct_mention'], (bot, message) => {
-      bot.reply(message, `Howdy! <@${message.user}> I'm looking to nearby stores!`)
+      pizzapi.Util.findNearbyStores(
+        '11 Times Square, New York, NY 10036',
+        'Delivery',
+        (storeData) => {
+          const stores = storeData.result.Stores
+          const filteredStores = stores.filter((store) => store.IsOpen && store.IsOnlineCapable && store.IsOnlineNow)
+
+          const openStores = filteredStores
+            .map((store) => {
+              return `${store.StoreID}: ${store.AddressDescription.replace(/\n/, '')}\r\n`
+            })
+            .sort()
+            .join()
+
+          bot.reply(message, openStores)
+        }
+      )
     })
   },
   help: {
